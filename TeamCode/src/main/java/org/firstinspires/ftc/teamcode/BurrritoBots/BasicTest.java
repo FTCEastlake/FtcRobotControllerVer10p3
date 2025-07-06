@@ -135,7 +135,7 @@ public class BasicTest extends LinearOpMode {
         {
             // Note: push start and A button on the gamepad to enable gamepad1
             double power = gamepad1.left_stick_y;
-            int encoderVal = (int)(power * 100);
+            int encoderVal = (int)(power * 30);
             DcMotorEx targetWheel = null;
             if (gamepad1.x) targetWheel = _frontLeft;       //_frontLeft.setPower(power);
             else if (gamepad1.y) targetWheel = _frontRight; //_frontRight.setPower(power);
