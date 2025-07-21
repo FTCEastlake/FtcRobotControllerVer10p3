@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.BurrritoBots;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Common.ParameterLogger;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -7,11 +8,17 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+// FTC dashboard
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+
 //import org.firstinspires.ftc.teamcode.ErcCommon.Gobilda4Bar;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@TeleOp(name = "BasicTest")
+import java.util.Map;
+@TeleOp(name = "BBotBasicTest")
 public class BBotBasicTest extends LinearOpMode {
 
     //**************************************************************
@@ -33,6 +40,9 @@ public class BBotBasicTest extends LinearOpMode {
 
     private ParameterLogger _logger;
     private HardwareMap _hardwareMap;
+    private BBVision _vision = null;
+
+    private BBConfigurations _configs;
 
     private ElapsedTime _debounce = new ElapsedTime();
 
@@ -46,7 +56,7 @@ public class BBotBasicTest extends LinearOpMode {
 
         _logger = new ParameterLogger(this, true);
         _hardwareMap = hardwareMap;
-
+        _configs = new BBConfigurations();
 
         // Make sure your ID's match your configuration
         _frontLeft = _hardwareMap.get(DcMotor.class, "frontLeft");
@@ -68,6 +78,8 @@ public class BBotBasicTest extends LinearOpMode {
         _logger.addParameter(_paramFREncVal);
         _logger.addParameter(_paramBLEncVal);
         _logger.addParameter(_paramBREncVal);
+
+        _vision = new BBVision(false, false, this, _logger);
     }
 
 //    private void resetEncoders() {
@@ -104,6 +116,9 @@ public class BBotBasicTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        Telemetry dashboardTelemetry = dashboard.getTelemetry();
+
         initRobot();
 
         while (!isStarted())
@@ -119,14 +134,17 @@ public class BBotBasicTest extends LinearOpMode {
         //******************************
         // Main loop
         //******************************
+
+        // Indexed according to the port number
+        String[] motorAliases = {"backRight", "backLeft", "frontRight", "frontLeft"};
         waitForStart();
         _logger.resetCycleTimer();
+        DcMotor targetWheel = null;
         while (!isStopRequested())
         {
             // Note: push start and A button on the gamepad to enable gamepad1
-            double power = gamepad1.left_stick_y;
+            double power = gamepad1.left_stick_y * _configs.MAX_DRIVE_SPEED;
             int encoderVal = (int)(power * 30);
-            DcMotor targetWheel = null;
             if (gamepad1.x) targetWheel = _frontLeft;       //_frontLeft.setPower(power);
             else if (gamepad1.y) targetWheel = _frontRight; //_frontRight.setPower(power);
             else if (gamepad1.a) targetWheel = _backLeft;   //_backLeft.setPower(power);
@@ -135,6 +153,19 @@ public class BBotBasicTest extends LinearOpMode {
             {
                 targetWheel.setTargetPosition(targetWheel.getCurrentPosition() + encoderVal);
                 targetWheel.setPower(power);
+
+                // Unfortunately targetWheel.getDeviceName() returns "DcMotor" string and not the alias (ex: "frontLeft")
+                // You can use the following loop to get the alias
+//                for (Map.Entry<String, DcMotor> entry : _hardwareMap.dcMotor.entrySet()) {
+//                    if (entry.getValue() == targetWheel) {
+//                        dashboardTelemetry.addData("targetWheel", entry.getKey());
+//                        break;
+//                    }
+//                }
+                // Or use the more efficient string array index
+                dashboardTelemetry.addData("targetWheel", motorAliases[targetWheel.getPortNumber()]);
+                dashboardTelemetry.addData("power", power);
+                dashboardTelemetry.update();
             }
 
 
@@ -160,12 +191,6 @@ public class BBotBasicTest extends LinearOpMode {
 
         }
     }
-
-
-
-
-
-
 
 
 }

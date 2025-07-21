@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name = "BBotPreciseDriveTeleOp")
 public class BBotPreciseDriveTeleOp extends LinearOpMode{
 
-    private Configurations _configs;
+    private BBConfigurations _configs;
     private ParameterLogger _logger;
     //private MecanumDriveNormal _drive;
     private MecanumDrivePrecise _drive;
@@ -66,10 +66,10 @@ public class BBotPreciseDriveTeleOp extends LinearOpMode{
 
     private void initRobot() throws InterruptedException {
 
-        _configs = new Configurations();
+        _configs = new BBConfigurations();
         _logger = new ParameterLogger(this, true);
 
-        _maxDriveSpeed = _configs.getMaxDriveSpeed();
+        _maxDriveSpeed = _configs.MAX_DRIVE_SPEED;
         // Because autonomous reset yaw, don't reset here.
         //_drive = new MecanumDriveNormal(false, _configs.getHubOrientation(), this, _logger);
         _drive = new MecanumDrivePrecise(false, _configs.getHubOrientation(), this, _logger);
