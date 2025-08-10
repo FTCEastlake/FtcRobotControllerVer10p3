@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.BurrritoBots;
-
 import org.firstinspires.ftc.teamcode.Common.*;
-
-        import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -51,6 +49,9 @@ public class BBotNormalDriveTeleOp extends LinearOpMode {
             if (gamepad1.start) {
                 _drive.resetYaw();
             }
+
+            // This will allow you to update the max speed on the fly through FTC dashboard
+            _maxDriveSpeed = _configs.MAX_DRIVE_SPEED;
 
             // If you press the left bumper, you get a drive from the point of view of the robot
             // (much like driving an RC vehicle)

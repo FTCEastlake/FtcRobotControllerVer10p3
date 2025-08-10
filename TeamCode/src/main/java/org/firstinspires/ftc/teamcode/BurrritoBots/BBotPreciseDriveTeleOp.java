@@ -54,6 +54,9 @@ public class BBotPreciseDriveTeleOp extends LinearOpMode{
                 _drive.resetYaw();
             }
 
+            // This will allow you to update the max speed on the fly through FTC dashboard
+            _maxDriveSpeed = _configs.MAX_DRIVE_SPEED;
+
             // If you press the left bumper, you get a drive from the point of view of the robot
             // (much like driving an RC vehicle)
             if (gamepad1.left_bumper) {
