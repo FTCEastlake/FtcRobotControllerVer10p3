@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.BurrritoBots;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Common.ParameterLogger;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -10,27 +11,37 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 // FTC dashboard
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 
 //import org.firstinspires.ftc.teamcode.ErcCommon.Gobilda4Bar;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-import java.util.Map;
 @TeleOp(name = "BBotBasicTest")
+//@Disabled
 public class BBotBasicTest extends LinearOpMode {
 
     //**************************************************************
     // Control Hub:
     //    USB port: "webcam 1"
-    //    Motor port0: "frontLeft"  (GoBILDA 5202/3/4 series)
-    //    Motor port1: "frontRight" (GoBILDA 5202/3/4 series)
-    //    Motor port2: "backLeft"   (GoBILDA 5202/3/4 series)
-    //    Motor port3: "backRight"  (GoBILDA 5202/3/4 series)
+    //    Motor port0: "backRight"  (GoBILDA 5202/3/4 series)
+    //    Motor port1: "backLeft"   (GoBILDA 5202/3/4 series)
+    //    Motor port2: "frontRight" (GoBILDA 5202/3/4 series)
+    //    Motor port3: "frontLeft"  (GoBILDA 5202/3/4 series)
     //    Servo port0: "blinkin led"
     //    I2C port0: "imu"          (REV internal IMU (BHI260AP))
-    //    I2C port1: "odo4bar"      (GoBILDA 4-Bar odometry)
+    //    I2C port1: "odo4bar"      (GoBILDA Pinpoint Odometry Computer)
+    //
+    // Expansion Hub:
+    //    USB port: "webcam 1"
+    //    Motor port0: "rotationMotor"  (GoBILDA 5202/3/4 series)
+    //    Motor port1: "slideMotor"     (GoBILDA 5202/3/4 series)
+    //    Motor port2: Nothing
+    //    Motor port3: Nothing
+    //    Servo port0: "clawServo"      (Servo)
+    //    I2C port0: "imu2"             (REV internal IMU (BNO055))
+    //    I2C port1: None
+    //
+    // WebcamFront
 
     // Declare motors
     private DcMotor _frontLeft = null;
@@ -42,9 +53,16 @@ public class BBotBasicTest extends LinearOpMode {
     private HardwareMap _hardwareMap;
     private BBVision _vision = null;
 
-    private BBConfigurations _configs;
+    //private BBConfigurations _configs;
+    private BBArmClaw _armClaw;
+    private BBArmRotate _armRotate;
+    private BBArmSlide _armSlide;
+
+    private double _lsy;
+    private double _rsy;
 
     private ElapsedTime _debounce = new ElapsedTime();
+
 
     private String _paramFLEncVal = "FL Encoder";
     private String _paramFREncVal = "FR Encoder";
@@ -56,7 +74,10 @@ public class BBotBasicTest extends LinearOpMode {
 
         _logger = new ParameterLogger(this, true);
         _hardwareMap = hardwareMap;
-        _configs = new BBConfigurations();
+        //_configs = new BBConfigurations();
+        _armClaw = new BBArmClaw(this, _logger);
+        _armRotate = new BBArmRotate(this, _logger);
+        _armSlide = new BBArmSlide(this, _logger);
 
         // Make sure your ID's match your configuration
         _frontLeft = _hardwareMap.get(DcMotor.class, "frontLeft");
@@ -71,6 +92,8 @@ public class BBotBasicTest extends LinearOpMode {
         _frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         _backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
+
+
         //resetEncoders();
 
         // Add all of the parameters you want to see on the driver hub display.
@@ -79,7 +102,7 @@ public class BBotBasicTest extends LinearOpMode {
         _logger.addParameter(_paramBLEncVal);
         _logger.addParameter(_paramBREncVal);
 
-        _vision = new BBVision(false, false, this, _logger);
+        //_vision = new BBVision(false, false, this, _logger);
     }
 
 //    private void resetEncoders() {
@@ -143,15 +166,15 @@ public class BBotBasicTest extends LinearOpMode {
         while (!isStopRequested())
         {
             // Note: push start and A button on the gamepad to enable gamepad1
-            double power = gamepad1.left_stick_y * _configs.MAX_DRIVE_SPEED;
-            int encoderVal = (int)(power * 30);
+            double power = gamepad1.left_stick_y * BBConfigurations.MAX_DRIVE_SPEED;
+            int wheelEncoderVal = (int)(power * 30);
             if (gamepad1.x) targetWheel = _frontLeft;       //_frontLeft.setPower(power);
             else if (gamepad1.y) targetWheel = _frontRight; //_frontRight.setPower(power);
             else if (gamepad1.a) targetWheel = _backLeft;   //_backLeft.setPower(power);
             else if (gamepad1.b) targetWheel = _backRight;  //_backRight.setPower(power);
             if (targetWheel != null)
             {
-                targetWheel.setTargetPosition(targetWheel.getCurrentPosition() + encoderVal);
+                targetWheel.setTargetPosition(targetWheel.getCurrentPosition() + wheelEncoderVal);
                 targetWheel.setPower(power);
 
                 // Unfortunately targetWheel.getDeviceName() returns "DcMotor" string and not the alias (ex: "frontLeft")
@@ -171,16 +194,26 @@ public class BBotBasicTest extends LinearOpMode {
 
             if (gamepad1.right_bumper)
             {
-                _frontLeft.setTargetPosition(_frontLeft.getCurrentPosition() + encoderVal);
-                _frontRight.setTargetPosition(_frontRight.getCurrentPosition() + encoderVal);
-                _backLeft.setTargetPosition(_backLeft.getCurrentPosition() + encoderVal);
-                _backRight.setTargetPosition(_backRight.getCurrentPosition() + encoderVal);
+                _frontLeft.setTargetPosition(_frontLeft.getCurrentPosition() + wheelEncoderVal);
+                _frontRight.setTargetPosition(_frontRight.getCurrentPosition() + wheelEncoderVal);
+                _backLeft.setTargetPosition(_backLeft.getCurrentPosition() + wheelEncoderVal);
+                _backRight.setTargetPosition(_backRight.getCurrentPosition() + wheelEncoderVal);
                 _frontLeft.setPower(power);
                 _frontRight.setPower(power);
                 _backLeft.setPower(power);
                 _backRight.setPower(power);
 
             }
+
+            if (gamepad2.b) _armClaw.setClawOpen();
+            if (gamepad2.a) _armClaw.setClawClose();
+
+            _rsy = -gamepad2.right_stick_y;
+            _armRotate.setRotationNormalMode(_rsy);
+
+            _lsy = -gamepad2.left_stick_y;;
+            _armSlide.setSlideNormalMode(_lsy);
+
 
             _logger.updateStatus("left_stick_y = " + gamepad1.left_stick_y);
             _logger.updateParameter(_paramFLEncVal, _frontLeft.getCurrentPosition());

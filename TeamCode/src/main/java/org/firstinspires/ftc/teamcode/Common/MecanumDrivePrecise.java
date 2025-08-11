@@ -127,6 +127,17 @@ public class MecanumDrivePrecise {
         // Apply final power
         setPower(maxSpeed);
 
+        //wait until robot is done or takes too long
+        while ((_frontLeft.isBusy() && _backLeft.isBusy() && _frontRight.isBusy() && _backRight.isBusy()))
+        {
+            //waste time while waiting
+            _logger.updateAll();
+        }
+
+        //STOP MOTORS WHEN DONE
+        setPower(0);
+        _logger.updateAll();
+
         _logger.updateParameter(_paramFLEncVal, newFLTarget);
         _logger.updateParameter(_paramFREncVal, newFRTarget);
         _logger.updateParameter(_paramBLEncVal, newBLTarget);
