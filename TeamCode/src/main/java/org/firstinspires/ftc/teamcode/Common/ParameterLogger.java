@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Common;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -17,6 +19,9 @@ public class ParameterLogger {
 
     private LinearOpMode _opMode;   // handle to LinearOpMode from the main function
     Telemetry _telemetry;
+    FtcDashboard _dashboard;
+    TelemetryPacket _dashboardPacket;
+
 
     Map<String, Telemetry.Item> _paramMap;
     Telemetry.Item _statusUpdate;
@@ -36,6 +41,8 @@ public class ParameterLogger {
     public ParameterLogger(LinearOpMode opMode, boolean enableCycleTimeLogging){
         _opMode = opMode;
         _telemetry = _opMode.telemetry;
+        _dashboard = FtcDashboard.getInstance();
+        _dashboardPacket = new TelemetryPacket();
         _enableCycleTime = enableCycleTimeLogging;
         init();
     }
@@ -43,7 +50,7 @@ public class ParameterLogger {
     private void init()
     {
         _paramMap = new HashMap<>();
-        _telemetry.clear();             // Removes all items from the receiver whose value is not to be retained.
+        _telemetry.clearAll();          // Removes all items from the receiver whose value is not to be retained.
         _telemetry.setAutoClear(false); // Sets whether clear() is automatically called after each call to update().
 
         // Status will always be the first (topmost) message to be displayed.
@@ -64,6 +71,8 @@ public class ParameterLogger {
     //*********************************************************************
     public void addParameter(String paramString) {
         _paramMap.put(paramString, _telemetry.addData(paramString, 0));
+        _dashboardPacket.put(paramString, 0); // Initial value
+
     }
 
 
@@ -72,21 +81,28 @@ public class ParameterLogger {
     //*********************************************************************
     public void updateStatus(String val) {
         _statusUpdate.setValue(val);
+        _dashboardPacket.put(_statusCaption, val);
     }
     public void updateParameter(String paramString, boolean val) {
         Objects.requireNonNull(_paramMap.get(paramString)).setValue(val ? "True" : "False");
+        _dashboardPacket.put(paramString, val ? "True" : "False");
     }
     public void updateParameter(String paramString, int val) {
         Objects.requireNonNull(_paramMap.get(paramString)).setValue(val);
+        _dashboardPacket.put(paramString, val);
     }
     public void updateParameter(String paramString, double val) {
         Objects.requireNonNull(_paramMap.get(paramString)).setValue(val);
+        _dashboardPacket.put(paramString, val);
     }
     public void updateParameter(String paramString, String val) {
         Objects.requireNonNull(_paramMap.get(paramString)).setValue(val);
+        _dashboardPacket.put(paramString, val);
     }
     public void updateAll() {
         _telemetry.update();
+        _dashboard.sendTelemetryPacket(_dashboardPacket);
+        _dashboardPacket = new TelemetryPacket(); // Reset for next cycle
     }
 
 
