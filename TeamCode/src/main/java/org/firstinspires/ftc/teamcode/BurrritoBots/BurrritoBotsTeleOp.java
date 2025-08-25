@@ -128,7 +128,7 @@ public class BurrritoBotsTeleOp extends LinearOpMode {
         _drive = new MecanumDriveNormal(false, BBConfigurations.getHubOrientation(), this, _logger);
         //_drive = new MecanumDrivePrecise(false, BBConfigurations.getHubOrientation(), this, _logger);
 
-        //_vision = new BBVision(false, false, this, _logger);
+        _vision = new BBVision(false, false, true, this, _logger);
 
     }
 }

@@ -8,8 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
-import org.firstinspires.ftc.robotcore.external.stream.CameraStreamServer;
-import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
+import org.firstinspires.ftc.teamcode.Common.DashboardCameraStream;
 import org.firstinspires.ftc.teamcode.Common.ParameterLogger;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -32,7 +31,7 @@ public class BBVision {
     private VisionPortal _visionPortal = null;               // Used to manage the video source.
     private AprilTagProcessor _aprilTag = null;              // Used for managing the AprilTag detection process.
     private PredominantColorProcessor _colorSensor = null;
-    //private CameraStreamProcessor _cameraStream = null;
+    private DashboardCameraStream _dashboardStream = null;
 
     private boolean _redMatch = false;
     private boolean _blueMatch = false;
@@ -48,16 +47,16 @@ public class BBVision {
     private String _paramColor      = "Detected Color";
 
 
-    public BBVision(boolean includeAprilTagDetection, boolean enableVisionColorSensor,
+    public BBVision(boolean includeAprilTagDetection, boolean enableVisionColorSensor, boolean enableDashboardStream,
                          LinearOpMode opMode, ParameterLogger logger) throws InterruptedException{
         _opMode = opMode;
         _hardwareMap = opMode.hardwareMap;
         _logger = logger;
 
-        init(includeAprilTagDetection, enableVisionColorSensor);
+        init(includeAprilTagDetection, enableVisionColorSensor, enableDashboardStream);
     }
 
-    private void init(boolean enableAprilTagDetection, boolean enableVisionColorSensor)
+    private void init(boolean enableAprilTagDetection, boolean enableVisionColorSensor, boolean enableDashboardStream)
     {
         if (enableVisionColorSensor)
         {
@@ -125,10 +124,20 @@ public class BBVision {
             builder.addProcessor(_colorSensor);     // using this will slow down camera pipeline.
             _logger.addParameter(_paramColor);
         }
+        if (enableDashboardStream)
+        {
+            // final to make sure it is only initialized once
+            final DashboardCameraStream streamProcessor = new DashboardCameraStream();
+            _dashboardStream = streamProcessor;
+            builder.addProcessor(_dashboardStream);
+        }
         _visionPortal = builder.build();
 
         if (enableVisionColorSensor)
             _visionPortal.setProcessorEnabled(_colorSensor, true);
+
+        if (_dashboardStream != null)
+            FtcDashboard.getInstance().startCameraStream(_dashboardStream, 0);
 
     }
 
